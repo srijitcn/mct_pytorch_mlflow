@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 import torch
 import math
+import mlflow
+import os
+
+print(f"DATABRICKS HOST:{os.environ['DATABRICKS_HOST']}")
+for name, value in os.environ.items():
+    print("{0}: {1}".format(name, value))
 
 
 class Polynomial3(torch.nn.Module):
