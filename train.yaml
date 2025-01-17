@@ -1,0 +1,16 @@
+name: pytorch_mlflow
+image: mosaicml/pytorch:2.2.2_cu121-python3.11-ubuntu20.04
+
+integrations:
+- integration_type: git_repo
+  git_repo: srijitcn/mct_pytorch_mlflow
+  git_branch: main # use your branch
+  ssh_clone: true # Should be true if using a private repo
+
+command: |
+  cd mct_pytorch_mlflow
+  torchrun train.py 
+
+compute:
+  gpus: 8
+  cluster: r8z11
