@@ -4,10 +4,12 @@ import math
 import mlflow
 import os
 
-print(f"DATABRICKS HOST:{os.environ['DATABRICKS_HOST']}")
-for name, value in os.environ.items():
-    print("{0}: {1}".format(name, value))
+#create an mlflow experiment
+mlflow.set_tracking_uri("databricks")
+experiment_path = f"/Users/srijit.nair@databricks.com/mlflow_experiments/mct_pytorch_mlflow_demo"
+experiment = mlflow.set_experiment(experiment_path)
 
+mlflow.pytorch.autolog()
 
 class Polynomial3(torch.nn.Module):
     def __init__(self):
