@@ -1,95 +1,64 @@
-import os
-import tempfile
-import numpy as np
+# -*- coding: utf-8 -*-
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.autograd import Variable
-
-from collections import namedtuple
-
-import logging
+import math
 
 
-
-# Create Params dictionary
-class Params(object):
-    def __init__(self, batch_size, test_batch_size, epochs, lr, momentum, seed, cuda, log_interval):
-        self.batch_size = batch_size
-        self.test_batch_size = test_batch_size
-        self.epochs = epochs
-        self.lr = lr
-        self.momentum = momentum
-        self.seed = seed
-        self.cuda = cuda
-        self.log_interval = log_interval
-
-class Model(nn.Module):
+class Polynomial3(torch.nn.Module):
     def __init__(self):
-        super(Model, self).__init__()
-        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
-        self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
-        self.conv2_drop = nn.Dropout2d()
-        self.fc1 = nn.Linear(320, 50)
-        self.fc2 = nn.Linear(50, 10)
- 
+        """
+        In the constructor we instantiate four parameters and assign them as
+        member parameters.
+        """
+        super().__init__()
+        self.a = torch.nn.Parameter(torch.randn(()))
+        self.b = torch.nn.Parameter(torch.randn(()))
+        self.c = torch.nn.Parameter(torch.randn(()))
+        self.d = torch.nn.Parameter(torch.randn(()))
+
     def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-        x = x.view(-1, 320)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, training=self.training)
-        x = self.fc2(x)
-        return F.log_softmax(x, dim=0)
+        """
+        In the forward function we accept a Tensor of input data and we must return
+        a Tensor of output data. We can use Modules defined in the constructor as
+        well as arbitrary operators on Tensors.
+        """
+        return self.a + self.b * x + self.c * x ** 2 + self.d * x ** 3
 
-def train(epoch):
-    # Configure args
-    args = Params(64, 1000, 10, 0.01, 0.5, 1, True, 200)
-    
-    cuda = not args.cuda and torch.cuda.is_available()
-    
-    
-    kwargs = {'num_workers': 8, 'pin_memory': True} if cuda else {}
+    def string(self):
+        """
+        Just like any class in Python, you can also define custom method on PyTorch modules
+        """
+        return f'y = {self.a.item()} + {self.b.item()} x + {self.c.item()} x^2 + {self.d.item()} x^3'
 
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=True, download=True,
-                    transform=transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ])),
-        batch_size=args.batch_size, shuffle=True, **kwargs)
 
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=False, transform=transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ])),
-        batch_size=args.test_batch_size, shuffle=True, **kwargs)
+def train():
 
-    model = Model()
-    if cuda:
-        model.cuda()
-    
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+    # Create Tensors to hold input and outputs.
+    x = torch.linspace(-math.pi, math.pi, 2000)
+    y = torch.sin(x)
 
-    model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        if cuda:
-            data, target = data.cuda(), target.cuda()
-        data, target = Variable(data), Variable(target)
+    # Construct our model by instantiating the class defined above
+    model = Polynomial3()
+
+    # Construct our loss function and an Optimizer. The call to model.parameters()
+    # in the SGD constructor will contain the learnable parameters (defined 
+    # with torch.nn.Parameter) which are members of the model.
+    criterion = torch.nn.MSELoss(reduction='sum')
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-6)
+    for t in range(2000):
+        # Forward pass: Compute predicted y by passing x to the model
+        y_pred = model(x)
+
+        # Compute and print loss
+        loss = criterion(y_pred, y)
+        if t % 100 == 99:
+            print(t, loss.item())
+
+        # Zero gradients, perform a backward pass, and update the weights.
         optimizer.zero_grad()
-        output = model(data)
-        loss = F.nll_loss(output, target)
         loss.backward()
         optimizer.step()
-        if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.data.item()))
-            step = epoch * len(train_loader) + batch_idx
-            model.log_weights(step)
+
+    print(f'Result: {model.string()}')
 
 
-train(1)
+train()
