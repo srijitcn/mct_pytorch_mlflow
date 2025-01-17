@@ -9,7 +9,7 @@ integrations:
 
 command: |
   cd mct_pytorch_mlflow
-  pip install --force-reinstall -v "numpy==1.25.2"
+  pip install -r requirements.txt
   torchrun train.py 
 
 compute:

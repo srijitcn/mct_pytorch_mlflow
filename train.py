@@ -1,5 +1,6 @@
 import os
 import tempfile
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,7 +10,10 @@ from torch.autograd import Variable
 
 from collections import namedtuple
 
- 
+import logging
+
+
+
 # Create Params dictionary
 class Params(object):
     def __init__(self, batch_size, test_batch_size, epochs, lr, momentum, seed, cuda, log_interval):
