@@ -86,3 +86,6 @@ def train(epoch):
                 100. * batch_idx / len(train_loader), loss.data.item()))
             step = epoch * len(train_loader) + batch_idx
             model.log_weights(step)
+
+
+train(1)
