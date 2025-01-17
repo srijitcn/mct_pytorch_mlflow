@@ -9,8 +9,6 @@ mlflow.set_tracking_uri("databricks")
 experiment_path = f"/Users/srijit.nair@databricks.com/mlflow_experiments/mct_pytorch_mlflow_demo"
 experiment = mlflow.set_experiment(experiment_path)
 
-mlflow.pytorch.autolog()
-
 class Polynomial3(torch.nn.Module):
     def __init__(self):
         """
@@ -41,7 +39,9 @@ class Polynomial3(torch.nn.Module):
 def train():
 
      with mlflow.start_run(experiment_id=experiment.experiment_id) as mlflow_run:
-         
+        
+        mlflow.pytorch.autolog()
+
         # Create Tensors to hold input and outputs.
         x = torch.linspace(-math.pi, math.pi, 2000)
         y = torch.sin(x)
@@ -54,6 +54,7 @@ def train():
         # with torch.nn.Parameter) which are members of the model.
         criterion = torch.nn.MSELoss(reduction='sum')
         optimizer = torch.optim.SGD(model.parameters(), lr=1e-6)
+        
         for t in range(2000):
             # Forward pass: Compute predicted y by passing x to the model
             y_pred = model(x)
